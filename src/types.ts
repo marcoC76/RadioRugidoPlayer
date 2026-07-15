@@ -2,6 +2,36 @@ export type ReggaeGenre = 'Roots' | 'Dub' | 'Steppers' | 'Dancehall';
 
 export type RadioThemeId = 'roots' | 'dub' | 'steppers' | 'retro';
 
+export interface BroadcastThemeConfig {
+  bgGradient: string;
+  accentClass: string;
+  h1Class: string;
+  subtitle: string;
+  progressClass: string;
+  badgeText: string;
+  badgeStyle: string;
+  indicatorStyle: string;
+  glowPulseColor: string;
+  textColor: string;
+}
+
+export interface CabinThemeConfig {
+  borderClass: string;
+  activeClass: string;
+  accentDot: string;
+  vuClass: string;
+  barClass: string;
+  previewGradient: string;
+}
+
+export interface ThemeDefinition {
+  id: RadioThemeId;
+  name: string;
+  desc: string;
+  broadcast: BroadcastThemeConfig;
+  cabin: CabinThemeConfig;
+}
+
 export type VisualizerType = 'spectrogram' | 'oscilloscope' | 'radial' | 'vu-analog' | 'matrix' | 'grid-3d';
 
 export interface Track {

@@ -75,3 +75,23 @@ body {
   animation: holographic 8s ease infinite;
 }
 
+/* PWA: force portrait on mobile — overlay if rotated */
+@media (orientation: landscape) and (max-height: 500px) {
+  body::after {
+    content: '🦁 Gira tu dispositivo a vertical para continuar';
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #07080a;
+    color: #f5f4f0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem;
+    text-align: center;
+    padding: 2rem;
+  }
+  body > * { display: none; }
+}
+

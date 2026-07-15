@@ -4,6 +4,7 @@ import { Track, PlaybackState, RadioThemeId, VisualizerType } from '../types';
 import { AudioVisualizer } from './AudioVisualizer';
 import { TrackWaveform } from './TrackWaveform';
 import { motion, AnimatePresence } from 'motion/react';
+import { THEMES } from '@/src/data/themes';
 
 interface BroadcastViewProps {
   tracks: Track[];
@@ -61,77 +62,8 @@ export const BroadcastView: React.FC<BroadcastViewProps> = ({
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  // Theme-specific config helper
-  const getThemeConfig = (tId: RadioThemeId) => {
-    switch (tId) {
-      case 'dub':
-        return {
-          bgGradient: 'radial-gradient(circle at center, #060b1e 0%, #020306 100%)',
-          title: (
-            <h1 className="font-display font-extrabold text-2xl md:text-3xl lg:text-4xl tracking-tight uppercase leading-none text-[#f5f4f0] drop-shadow-[0_0_15px_rgba(6,182,212,0.3)]">
-              RADIO <span className="text-cyan-400">RUGIDO</span>
-            </h1>
-          ),
-          subtitle: 'NEGUS SELECTER',
-          progressClass: 'bg-gradient-to-r from-[#06b6d4] via-[#6366f1] to-[#ec4899]',
-          badgeText: 'RADIO RUGIDO DUB',
-          badgeStyle: 'border-cyan-500/20 bg-cyan-500/10 text-cyan-400',
-          indicatorStyle: 'border-[#111c30] bg-[#05070c] text-cyan-400',
-          glowPulseColor: 'bg-cyan-500',
-          textColor: 'text-cyan-400',
-        };
-      case 'steppers':
-        return {
-          bgGradient: 'radial-gradient(circle at center, #15171d 0%, #06070a 100%)',
-          title: (
-            <h1 className="font-display font-extrabold text-2xl md:text-3xl lg:text-4xl tracking-tight uppercase leading-none text-[#f5f4f0] tracking-wider">
-              RADIO <span className="text-[#ea580c]">RUGIDO</span>
-            </h1>
-          ),
-          subtitle: 'NEGUS SELECTER',
-          progressClass: 'bg-gradient-to-r from-[#facc15] via-[#f97316] to-[#ef4444]',
-          badgeText: 'RADIO RUGIDO STEPPERS',
-          badgeStyle: 'border-orange-500/30 bg-orange-500/10 text-orange-500',
-          indicatorStyle: 'border-[#2d3039] bg-[#14161d] text-[#f59e0b]',
-          glowPulseColor: 'bg-amber-500',
-          textColor: 'text-[#ea580c]',
-        };
-      case 'retro':
-        return {
-          bgGradient: 'radial-gradient(circle at center, #1b1915 0%, #0a0907 100%)',
-          title: (
-            <h1 className="font-display font-extrabold text-2xl md:text-3xl lg:text-4xl tracking-tight uppercase leading-none text-amber-100">
-              RADIO <span className="text-amber-600">RUGIDO</span>
-            </h1>
-          ),
-          subtitle: 'NEGUS SELECTER',
-          progressClass: 'bg-gradient-to-r from-[#78350f] via-[#b45309] to-[#f59e0b]',
-          badgeText: 'RADIO RUGIDO RETRO',
-          badgeStyle: 'border-amber-600/30 bg-amber-600/5 text-amber-500',
-          indicatorStyle: 'border-[#2b251d] bg-[#14120f] text-amber-500',
-          glowPulseColor: 'bg-amber-600',
-          textColor: 'text-amber-500',
-        };
-      default: // roots
-        return {
-          bgGradient: 'radial-gradient(circle at center, #12141a 0%, #050608 100%)',
-          title: (
-            <h1 className="font-display font-extrabold text-2xl md:text-3xl lg:text-4xl tracking-tight uppercase leading-none text-[#f5f4f0]">
-              RADIO <span className="text-amber-500">RUGIDO</span>
-            </h1>
-          ),
-          subtitle: 'NEGUS SELECTER',
-          progressClass: 'bg-gradient-to-r from-[#10b981] via-[#f59e0b] to-[#ef4444]',
-          badgeText: 'RADIO RUGIDO ROOTS',
-          badgeStyle: 'border-emerald-500/20 bg-emerald-500/10 text-[#10b981]',
-          indicatorStyle: 'border-[#1d222e] bg-[#0d0f14]/85 text-rose-500',
-          glowPulseColor: 'bg-rose-500',
-          textColor: 'text-amber-500',
-        };
-    }
-  };
-
-  const config = getThemeConfig(themeId as RadioThemeId);
+  const theme = THEMES.find(t => t.id === themeId) ?? THEMES[0];
+  const config = theme.broadcast;
   const percentPlayed = playbackState.duration ? (playbackState.currentTime / playbackState.duration) * 100 : 0;
 
   // Prepare custom crawler content incorporating playing track info
@@ -240,7 +172,9 @@ export const BroadcastView: React.FC<BroadcastViewProps> = ({
             <div className="flex gap-1 h-1 w-12 mb-1.5 rounded-full overflow-hidden bg-gradient-to-r from-[#78350f] to-[#f59e0b]" />
           )}
 
-          {config.title}
+          <h1 className={`font-display font-extrabold text-2xl md:text-3xl lg:text-4xl tracking-tight uppercase leading-none text-[#f5f4f0] ${config.h1Class}`}>
+            RADIO <span className={config.accentClass}>RUGIDO</span>
+          </h1>
           <p className="text-[9px] md:text-[10px] font-mono tracking-widest text-[#8a939e] uppercase mt-0.5 flex items-center gap-1">
             BY <span className="text-[#ef4444] font-bold">{config.subtitle}</span>
           </p>
@@ -470,16 +404,6 @@ export const BroadcastView: React.FC<BroadcastViewProps> = ({
         {/* Decorative scanlines for the ticker bar */}
         <div className="absolute inset-0 ticker-dot-pattern opacity-40 pointer-events-none" />
 
-        {/* Ticker Title Badge - Matches theme aesthetic */}
-        <div className={`font-mono font-black text-[10px] px-3.5 py-1.5 rounded-r-md uppercase tracking-[0.2em] animate-pulse z-20 shrink-0 border-r-4 ${
-          themeId === 'roots' ? 'bg-[#ef4444] text-white border-[#f59e0b] shadow-[0_0_15px_rgba(239,68,68,0.4)]' :
-          themeId === 'dub' ? 'bg-cyan-950 text-cyan-400 border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.4)] border border-cyan-500/20' :
-          themeId === 'steppers' ? 'bg-orange-600 text-white border-yellow-500 shadow-[0_0_15px_rgba(234,88,12,0.4)]' :
-          'bg-amber-800 text-amber-100 border-amber-500 shadow-[0_0_15px_rgba(180,83,9,0.4)] border border-amber-600/25'
-        }`}>
-          TELETIPO / CRAWL
-        </div>
-        
         {/* Scrolling text container - Seamless Teletipo Implementation */}
         <div className="relative flex-1 overflow-hidden h-6 flex items-center">
           <div 

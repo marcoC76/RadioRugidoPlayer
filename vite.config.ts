@@ -20,7 +20,7 @@ export default defineConfig(() => {
           description: 'Reggae, Roots, Dubplate & Sound System por Negus Selecter',
           theme_color: '#07080a',
           background_color: '#07080a',
-          display: 'standalone',
+          display: 'fullscreen',
           orientation: 'portrait-primary',
           scope: '/RadioRugidoPlayer/',
           start_url: '/RadioRugidoPlayer/',

@@ -25,6 +25,8 @@ import { Track, PlaybackState, RadioThemeId, VisualizerType } from '../types';
 import { AudioVisualizer } from './AudioVisualizer';
 import { TrackWaveform } from './TrackWaveform';
 import { SoundclashFXBoard } from './SoundclashFXBoard';
+import { ThemeCard } from './ThemeCard';
+import { THEMES } from '@/src/data/themes';
 
 interface CabinViewProps {
   tracks: Track[];
@@ -205,10 +207,6 @@ export const CabinView: React.FC<CabinViewProps> = ({
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="hidden md:flex flex-col items-end font-mono text-[10px] text-[#8a939e]">
-            <div>OPERATOR: <span className="text-amber-500">READY</span></div>
-            <div>STREAMS: <span className="text-[#ef4444]">OBS READY (1080P)</span></div>
-          </div>
           
           <button 
             id="go-to-broadcast-btn"
@@ -544,63 +542,15 @@ export const CabinView: React.FC<CabinViewProps> = ({
               Personaliza el entorno del reproductor y los elementos gráficos de la transmisión. Cada estilo tiene su propio fondo, ecualizadores y cajas de sonido.
             </p>
 
-            <div className="flex flex-col gap-3">
-              {[
-                {
-                  id: 'roots' as const,
-                  name: 'Roots & Culture',
-                  desc: 'Vibras rasta clásicas, caja de madera y tonos verdes, dorados y rojos.',
-                  borderClass: 'border-emerald-500/20 hover:border-emerald-500/40 bg-emerald-500/5 text-emerald-400',
-                  activeClass: 'border-emerald-500 bg-emerald-500/10 text-emerald-400 font-bold shadow-lg shadow-emerald-500/5',
-                  accentDot: 'bg-emerald-500',
-                },
-                {
-                  id: 'dub' as const,
-                  name: 'Deep Dub Space',
-                  desc: 'Entorno cósmico, neón lila y cian, ondas de eco y partículas espaciales.',
-                  borderClass: 'border-cyan-500/20 hover:border-cyan-500/40 bg-cyan-500/5 text-cyan-400',
-                  activeClass: 'border-cyan-400 bg-cyan-400/10 text-cyan-400 font-bold shadow-lg shadow-cyan-400/5',
-                  accentDot: 'bg-cyan-400',
-                },
-                {
-                  id: 'steppers' as const,
-                  name: 'Kingston Steppers',
-                  desc: 'Sonido industrial acelerado, rejilla metálica, líneas de peligro y flashes.',
-                  borderClass: 'border-orange-500/20 hover:border-orange-500/40 bg-orange-500/5 text-orange-400',
-                  activeClass: 'border-orange-500 bg-orange-500/10 text-orange-400 font-bold shadow-lg shadow-orange-500/5',
-                  accentDot: 'bg-orange-500',
-                },
-                {
-                  id: 'retro' as const,
-                  name: 'Retro Studio 70s',
-                  desc: 'Consola retro de roble, panel cálido y medidores analógicos con agujas.',
-                  borderClass: 'border-amber-600/20 hover:border-amber-600/40 bg-amber-600/5 text-amber-500',
-                  activeClass: 'border-amber-600 bg-amber-600/10 text-amber-500 font-bold shadow-lg shadow-amber-600/5',
-                  accentDot: 'bg-amber-600',
-                },
-              ].map((theme) => {
-                const isActive = themeId === theme.id;
-                return (
-                  <button
-                    key={theme.id}
-                    onClick={() => onChangeTheme(theme.id)}
-                    className={`w-full text-left p-3.5 rounded-lg border flex items-start gap-3 transition-all cursor-pointer ${
-                      isActive ? theme.activeClass : theme.borderClass
-                    }`}
-                  >
-                    <span className={`w-2.5 h-2.5 rounded-full mt-1 shrink-0 ${theme.accentDot} ${isActive ? 'animate-ping' : ''}`} />
-                    <div>
-                      <div className="text-xs uppercase font-mono tracking-wider flex items-center gap-2">
-                        {theme.name}
-                        {isActive && <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white font-normal uppercase">Activo</span>}
-                      </div>
-                      <p className="text-[10px] text-[#8a939e] mt-1 leading-relaxed">
-                        {theme.desc}
-                      </p>
-                    </div>
-                  </button>
-                );
-              })}
+            <div className="grid gap-3">
+              {THEMES.map((theme) => (
+                <ThemeCard
+                  key={theme.id}
+                  theme={theme}
+                  isActive={themeId === theme.id}
+                  onChange={onChangeTheme}
+                />
+              ))}
             </div>
           </div>
 

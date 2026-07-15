@@ -1,0 +1,6 @@
+{
+  "name": "Radio Rugido Player",
+  "description": "Una app de cabina y transmisión para radio reggae y sound system por Negus Selecter, con reproductor local y modo transmisión para OBS.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -14,6 +14,7 @@ export default defineConfig(() => {
         registerType: 'autoUpdate',
         includeAssets: ['icons/*.png'],
         manifest: {
+          lang: 'es',
           name: 'Radio Rugido Player',
           short_name: 'Radio Rugido',
           description: 'Reggae, Roots, Dubplate & Sound System por Negus Selecter',
@@ -21,11 +22,11 @@ export default defineConfig(() => {
           background_color: '#07080a',
           display: 'standalone',
           orientation: 'portrait-primary',
-          scope: '/',
-          start_url: '/',
+          scope: '/RadioRugidoPlayer/',
+          start_url: '/RadioRugidoPlayer/',
           icons: [
-            { src: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
-            { src: '/icons/icon-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
+            { src: '/RadioRugidoPlayer/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
+            { src: '/RadioRugidoPlayer/icons/icon-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
           ],
         },
         workbox: {

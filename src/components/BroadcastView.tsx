@@ -192,6 +192,52 @@ export const BroadcastView: React.FC<BroadcastViewProps> = ({
         </div>
       </header>
 
+      {/* Dynamic continuous Scrolling Marquee News Ticker - Seamless Teletipo / Crawl */}
+      <div className="w-full bg-[#08090c]/60 border-y border-white/5 py-1.5 z-10 relative flex items-center shadow-[0_4px_20px_rgba(0,0,0,0.5)] backdrop-blur-xs shrink-0 mb-4">
+        <style dangerouslySetInnerHTML={{ __html: `
+          @keyframes ticker-scroll {
+            0% { transform: translate3d(0, 0, 0); }
+            100% { transform: translate3d(-50%, 0, 0); }
+          }
+          .ticker-content-wrapper {
+            display: flex;
+            white-space: nowrap;
+            animation: ticker-scroll var(--ticker-duration, 35s) linear infinite;
+            will-change: transform;
+            flex-shrink: 0;
+            min-width: max-content;
+          }
+          .ticker-text-item {
+            display: inline-block;
+            padding-right: 8rem;
+            flex-shrink: 0;
+          }
+          .ticker-dot-pattern {
+            background-image: radial-gradient(rgba(245, 158, 11, 0.15) 1px, transparent 1px);
+            background-size: 5px 5px;
+          }
+        `}} />
+
+        <div className="absolute inset-0 ticker-dot-pattern opacity-30 pointer-events-none" />
+
+        <div className="relative flex-1 overflow-hidden h-5 flex items-center mx-4 md:mx-8">
+          <div 
+            className="ticker-content-wrapper text-[11px] font-mono font-bold uppercase tracking-widest drop-shadow-[0_0_6px_rgba(245,158,11,0.2)]"
+            style={{ 
+              '--ticker-duration': `${scrollDuration}s`,
+              color: themeId === 'roots' ? '#f59e0b' : themeId === 'dub' ? '#22d3ee' : themeId === 'steppers' ? '#f97316' : '#f59e0b'
+            } as React.CSSProperties}
+          >
+            <div className="ticker-text-item flex items-center gap-2">
+              <span>{textToScroll}</span>
+            </div>
+            <div className="ticker-text-item flex items-center gap-2">
+              <span>{textToScroll}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* CENTER DECK: Heavy Sound System Stack Visualizer */}
       <main className="flex-1 w-full max-w-[1300px] mx-auto grid grid-cols-1 md:grid-cols-12 items-center gap-4 md:gap-6 px-4 md:px-8 z-10 py-2 overflow-hidden">
         
@@ -373,56 +419,6 @@ export const BroadcastView: React.FC<BroadcastViewProps> = ({
         </section>
 
       </main>
-
-      {/* Dynamic continuous Scrolling Marquee News Ticker - Seamless Teletipo / Crawl */}
-      <div className="w-full bg-[#08090c]/90 border-y border-white/10 py-2.5 overflow-hidden whitespace-nowrap z-10 relative flex items-center shadow-[0_-4px_30px_rgba(0,0,0,0.65)] backdrop-blur-xs">
-        {/* Ticker CSS Keyframes for seamless infinite scrolling */}
-        <style dangerouslySetInnerHTML={{ __html: `
-          @keyframes ticker-scroll {
-            0% { transform: translate3d(0, 0, 0); }
-            100% { transform: translate3d(-50%, 0, 0); }
-          }
-          .ticker-content-wrapper {
-            display: flex;
-            white-space: nowrap;
-            animation: ticker-scroll var(--ticker-duration, 35s) linear infinite;
-            will-change: transform;
-            flex-shrink: 0;
-            min-width: max-content;
-          }
-          .ticker-text-item {
-            display: inline-block;
-            padding-right: 8rem;
-            flex-shrink: 0;
-          }
-          .ticker-dot-pattern {
-            background-image: radial-gradient(rgba(245, 158, 11, 0.15) 1px, transparent 1px);
-            background-size: 5px 5px;
-          }
-        `}} />
-
-        {/* Decorative scanlines for the ticker bar */}
-        <div className="absolute inset-0 ticker-dot-pattern opacity-40 pointer-events-none" />
-
-        {/* Scrolling text container - Seamless Teletipo Implementation */}
-        <div className="relative flex-1 overflow-hidden h-6 flex items-center">
-          <div 
-            className="ticker-content-wrapper text-[12.5px] font-mono font-bold uppercase tracking-widest drop-shadow-[0_0_8px_rgba(245,158,11,0.3)]"
-            style={{ 
-              '--ticker-duration': `${scrollDuration}s`,
-              color: themeId === 'roots' ? '#f59e0b' : themeId === 'dub' ? '#22d3ee' : themeId === 'steppers' ? '#f97316' : '#f59e0b'
-            } as React.CSSProperties}
-          >
-            {/* We repeat the text twice for a seamless loop, separated by a distinct symbol */}
-            <div className="ticker-text-item flex items-center gap-2">
-              <span>{textToScroll}</span>
-            </div>
-            <div className="ticker-text-item flex items-center gap-2">
-              <span>{textToScroll}</span>
-            </div>
-          </div>
-        </div>
-      </div>
 
     </div>
   );

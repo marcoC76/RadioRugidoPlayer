@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { ArrowLeft, Disc, Volume2, Instagram, Youtube, Tv, Sparkles, Music } from 'lucide-react';
 import { Track, PlaybackState, RadioThemeId, VisualizerType } from '../types';
 import { AudioVisualizer } from './AudioVisualizer';
@@ -34,7 +34,24 @@ export const BroadcastView: React.FC<BroadcastViewProps> = ({
   onSeek,
 }) => {
   const currentTrack = tracks[currentTrackIndex] || null;
+  const [hasEntered, setHasEntered] = useState(false);
+  const [trackFlash, setTrackFlash] = useState(false);
   const [showExitTip, setShowExitTip] = useState(true);
+  const prevTrackIndexRef = useRef<number | undefined>(undefined);
+
+  // Hero entry: trigger entrance animation once on mount
+  useEffect(() => { setHasEntered(true); }, []);
+
+  // Track transition: detect index change and trigger flash
+  useEffect(() => {
+    const prev = prevTrackIndexRef.current;
+    if (prev !== undefined && prev !== currentTrackIndex) {
+      setTrackFlash(true);
+      const timer = setTimeout(() => setTrackFlash(false), 200);
+      return () => clearTimeout(timer);
+    }
+    prevTrackIndexRef.current = currentTrackIndex;
+  }, [currentTrackIndex]);
 
   // Auto-hide exit tip after 6 seconds so it doesn't clutter the OBS frame
   useEffect(() => {
@@ -62,6 +79,19 @@ export const BroadcastView: React.FC<BroadcastViewProps> = ({
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
+  const titleRef = useRef<HTMLDivElement>(null);
+  const [titleOverflows, setTitleOverflows] = useState(false);
+
+  useEffect(() => {
+    const el = titleRef.current;
+    if (el) {
+      const parent = el.parentElement;
+      if (parent) {
+        setTitleOverflows(el.scrollWidth > parent.clientWidth);
+      }
+    }
+  }, [currentTrack]);
+
   const theme = THEMES.find(t => t.id === themeId) ?? THEMES[0];
   const config = theme.broadcast;
   const percentPlayed = playbackState.duration ? (playbackState.currentTime / playbackState.duration) * 100 : 0;
@@ -87,6 +117,7 @@ export const BroadcastView: React.FC<BroadcastViewProps> = ({
       {/* Background Audio Visualizer - Low Opacity */}
       <div className="absolute inset-0 z-0 pointer-events-none opacity-20">
         <AudioVisualizer 
+          key={`bg-${currentTrackIndex}`}
           isPlaying={isPlaying} 
           volume={playbackState.volume} 
           genre={currentTrack?.genre || 'Roots'} 
@@ -96,6 +127,36 @@ export const BroadcastView: React.FC<BroadcastViewProps> = ({
           mode="visualizer-only"
         />
       </div>
+
+      {/* Analog Texture Layers */}
+      {/* 1. Vinyl Crackle / Grain */}
+      <div className="absolute inset-0 z-[1] pointer-events-none opacity-[0.04] mix-blend-overlay">
+        <svg className="w-full h-full" preserveAspectRatio="none">
+          <filter id="noise-broadcast">
+            <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="4" stitchTiles="stitch" />
+            <feColorMatrix type="saturate" values="0" />
+          </filter>
+          <rect width="100%" height="100%" filter="url(#noise-broadcast)" opacity="0.5" />
+        </svg>
+      </div>
+      {/* 2. CRT Scan Lines */}
+      <div className="absolute inset-0 z-[2] pointer-events-none scanlines opacity-[0.06]" />
+      {/* 3. Reinforced Vignette — 3-ring shadow for analog depth */}
+      <div className="absolute inset-0 z-[2] pointer-events-none bg-[radial-gradient(ellipse_at_center,transparent_35%,rgba(7,8,10,0.4)_65%,rgba(7,8,10,0.75)_85%,#07080a_100%)]" />
+
+      {/* Track Transition Flash Frame */}
+      <AnimatePresence>
+        {trackFlash && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.12 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.08 }}
+            className="absolute inset-0 z-[15] pointer-events-none bg-white"
+          />
+        )}
+      </AnimatePresence>
+
       {/* Full-screen high-impact FLASH FX notification */}
       <AnimatePresence>
         {flashMessage && (
@@ -155,7 +216,12 @@ export const BroadcastView: React.FC<BroadcastViewProps> = ({
       </AnimatePresence>
 
       {/* TOP DECK: Station Branding Header */}
-      <header className="px-4 pt-6 pb-1 md:px-8 md:pt-5 md:pb-2 flex flex-col xs:flex-row justify-between items-start xs:items-center gap-2 w-full max-w-[1500px] mx-auto z-10">
+      <motion.header
+        initial={false}
+        animate={hasEntered ? { opacity: 1, y: 0 } : { opacity: 0, y: -12 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
+        className="px-4 pt-6 pb-1 md:px-8 md:pt-5 md:pb-2 flex flex-col xs:flex-row justify-between items-start xs:items-center gap-2 w-full max-w-[1500px] mx-auto z-10"
+      >
         <div>
           {/* Tri-color reggae aesthetic or themed accent line */}
           {themeId === 'roots' ? (
@@ -172,7 +238,7 @@ export const BroadcastView: React.FC<BroadcastViewProps> = ({
             <div className="flex gap-1 h-1 w-12 mb-1.5 rounded-full overflow-hidden bg-gradient-to-r from-[#78350f] to-[#f59e0b]" />
           )}
 
-          <h1 className={`font-display font-extrabold text-2xl md:text-3xl lg:text-4xl tracking-tight uppercase leading-none text-[#f5f4f0] ${config.h1Class}`}>
+          <h1 className={`font-display font-extrabold text-2xl md:text-3xl lg:text-4xl tracking-tight uppercase leading-none text-[#f5f4f0] analog-glow-text ${config.h1Class}`}>
             RADIO <span className={config.accentClass}>RUGIDO</span>
           </h1>
           <p className="text-[9px] md:text-[10px] font-mono tracking-widest text-[#8a939e] uppercase mt-0.5 flex items-center gap-1">
@@ -190,10 +256,15 @@ export const BroadcastView: React.FC<BroadcastViewProps> = ({
             LIVE / ON AIR
           </span>
         </div>
-      </header>
+      </motion.header>
 
       {/* Dynamic continuous Scrolling Marquee News Ticker - Seamless Teletipo / Crawl */}
-      <div className="w-full bg-[#08090c]/60 border-y border-white/5 py-1.5 z-10 relative flex items-center shadow-[0_4px_20px_rgba(0,0,0,0.5)] backdrop-blur-xs shrink-0 mb-4">
+      <motion.div
+        initial={false}
+        animate={hasEntered ? { opacity: 1, x: 0 } : { opacity: 0, x: -30 }}
+        transition={{ duration: 0.5, ease: 'easeOut', delay: 0.15 }}
+        className="w-full bg-[#08090c]/60 border-y border-white/5 py-1.5 z-10 relative flex items-center shadow-[0_4px_20px_rgba(0,0,0,0.5)] backdrop-blur-xs shrink-0 mb-4"
+      >
         <style dangerouslySetInnerHTML={{ __html: `
           @keyframes ticker-scroll {
             0% { transform: translate3d(0, 0, 0); }
@@ -236,16 +307,22 @@ export const BroadcastView: React.FC<BroadcastViewProps> = ({
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* CENTER DECK: Heavy Sound System Stack Visualizer */}
-      <main className="flex-1 w-full max-w-[1300px] mx-auto grid grid-cols-1 md:grid-cols-12 items-center gap-4 md:gap-6 px-4 md:px-8 z-10 py-2 overflow-hidden">
+      <motion.main
+        initial={false}
+        animate={hasEntered ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.98 }}
+        transition={{ duration: 0.5, ease: 'easeOut', delay: 0.3 }}
+        className="flex-1 w-full max-w-[1300px] mx-auto grid grid-cols-1 md:grid-cols-12 items-center gap-4 md:gap-6 px-4 md:px-8 z-10 py-2 overflow-hidden"
+      >
         
         {/* Left Side: Massive Speaker Visualizer (7 cols) */}
         <section className="md:col-span-7 h-40 xs:h-56 sm:h-64 md:h-[320px] lg:h-[380px] flex items-center justify-center relative">
-          <div className="w-full h-full p-1.5 bg-[#0c0d12]/40 border border-[#1a1d26]/40 rounded-xl relative">
+          <div className="w-full h-full p-1.5 bg-[#0c0d12]/40 border border-[#1a1d26]/40 rounded-xl relative animate-warm-border">
             {/* Real audio reactive visualizer - Speakers only */}
             <AudioVisualizer 
+              key={`viz-${currentTrackIndex}`}
               isPlaying={isPlaying} 
               volume={playbackState.volume} 
               genre={currentTrack?.genre || 'Roots'} 
@@ -284,16 +361,37 @@ export const BroadcastView: React.FC<BroadcastViewProps> = ({
             <span className="text-[9px] md:text-[10px] font-mono tracking-widest text-[#8a939e] uppercase font-bold">
               NOW PLAYING / AL AIRE
             </span>
-            <h2 className="text-xl xs:text-2xl md:text-3xl lg:text-4xl font-display font-extrabold text-[#f5f4f0] leading-tight tracking-tight uppercase">
-              {currentTrack ? currentTrack.title : 'ESPERANDO SEÑAL'}
-            </h2>
-            <h3 className={`text-base xs:text-lg md:text-xl font-sans font-medium mt-0.5 ${config.textColor}`}>
-              {currentTrack ? currentTrack.artist : 'CONECTANDO REPRODUCTOR'}
-            </h3>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentTrack ? currentTrack.id : 'empty'}
+                initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                transition={{ duration: 0.3 }}
+                className="flex flex-col gap-1"
+              >
+                <div className="relative overflow-hidden whitespace-nowrap">
+                  <div
+                    ref={titleRef}
+                    className={`inline-block text-xl xs:text-2xl md:text-3xl lg:text-4xl font-sans font-bold text-[#f5f4f0] leading-tight tracking-tight uppercase analog-glow-text ${titleOverflows ? 'animate-title-scroll' : ''}`}
+                  >
+                    {currentTrack ? currentTrack.title : 'ESPERANDO SEÑAL'}
+                    {currentTrack && titleOverflows && (
+                      <span className="inline-block px-12 select-none">
+                        {currentTrack.title}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <h3 className={`text-base xs:text-lg md:text-xl font-sans font-medium mt-0.5 ${config.textColor}`}>
+                  {currentTrack ? currentTrack.artist : 'CONECTANDO REPRODUCTOR'}
+                </h3>
+              </motion.div>
+            </AnimatePresence>
           </div>
 
           {/* Spinning Vinyl Deck & Animated Notes Effect */}
-          <div className="flex items-center gap-3.5 bg-black/35 border border-[#1b1e26]/50 rounded-xl p-3 relative overflow-hidden shadow-lg">
+          <div className="flex items-center gap-3.5 bg-black/35 border border-[#1b1e26]/50 rounded-xl p-3 relative overflow-hidden shadow-lg animate-warm-border">
             {/* Background ambient lighting */}
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(245,158,11,0.03)_0%,transparent_70%)] pointer-events-none" />
 
@@ -418,7 +516,7 @@ export const BroadcastView: React.FC<BroadcastViewProps> = ({
 
         </section>
 
-      </main>
+      </motion.main>
 
     </div>
   );

@@ -17,6 +17,7 @@ import {
   ChevronDown, 
   FolderOpen, 
   RotateCcw,
+  Shuffle,
   Sliders,
   Palette,
   GripVertical
@@ -52,6 +53,8 @@ interface CabinViewProps {
   visualizerType: VisualizerType;
   onChangeVisualizer: (visualizerType: VisualizerType) => void;
   onReorderTracks: (startIndex: number, endIndex: number) => void;
+  shuffle: boolean;
+  onToggleShuffle: () => void;
   onPullUp?: () => void;
   flashMessage: string | null;
   onTriggerFlashMessage: (msg: string) => void;
@@ -83,6 +86,8 @@ export const CabinView: React.FC<CabinViewProps> = ({
   visualizerType,
   onChangeVisualizer,
   onReorderTracks,
+  shuffle,
+  onToggleShuffle,
   onPullUp,
   flashMessage,
   onTriggerFlashMessage,
@@ -280,13 +285,27 @@ export const CabinView: React.FC<CabinViewProps> = ({
               </div>
               
               {tracks.length > 0 && (
-                <button 
-                  onClick={onClearPlaylist}
-                  className="flex items-center gap-1.5 text-[10px] uppercase font-mono tracking-wider text-rose-400/80 hover:text-rose-400 transition-colors cursor-pointer"
-                >
-                  <Trash2 size={11} />
-                  Limpiar Playlist
-                </button>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={onToggleShuffle}
+                    className={`flex items-center gap-1.5 text-[10px] uppercase font-mono tracking-wider transition-colors cursor-pointer ${
+                      shuffle
+                        ? 'text-emerald-400 font-bold'
+                        : 'text-emerald-400/60 hover:text-emerald-400'
+                    }`}
+                    title={shuffle ? 'Aleatorio ON — Sin repetición' : 'Activar Aleatorio'}
+                  >
+                    <Shuffle size={11} />
+                    {shuffle ? 'Aleatorio ON' : 'Aleatorio'}
+                  </button>
+                  <button 
+                    onClick={onClearPlaylist}
+                    className="flex items-center gap-1.5 text-[10px] uppercase font-mono tracking-wider text-rose-400/80 hover:text-rose-400 transition-colors cursor-pointer"
+                  >
+                    <Trash2 size={11} />
+                    Limpiar Playlist
+                  </button>
+                </div>
               )}
             </div>
 

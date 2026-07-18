@@ -22,6 +22,16 @@ const getAudioDuration = (file: File): Promise<number> => {
   });
 };
 
+// Fisher-Yates shuffle for indices
+const buildShuffleQueue = (length: number): number[] => {
+  const indices = Array.from({ length }, (_, i) => i);
+  for (let i = indices.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [indices[i], indices[j]] = [indices[j], indices[i]];
+  }
+  return indices;
+};
+
 // Smart parser for Reggae track names
 const parseFileName = (fileName: string) => {
   // Strip extension
@@ -53,6 +63,9 @@ export default function App() {
     "🦁 ¡ÚNETE A LA MANADA! SÍGUENOS EN INSTAGRAM, TIKTOK Y YOUTUBE: @RADIORUGIDO 🦁 | 📻 TRANSMITIENDO EN VIVO CON LO MEJOR DEL REGGAE, ROOTS, DUBPLATE & SOUND SYSTEM POR NEGUS SELECTER 📻 | 🔥 SESIÓN EN DIRECTO - ENTRANDO EN SINTONÍA DESDE LA CABINA OFICIAL 🔥"
   );
   
+  const [shuffle, setShuffle] = useState(false);
+  const [uiBrightness, setUiBrightness] = useState(1.0);
+
   const [playbackState, setPlaybackState] = useState<PlaybackState>({
     isPlaying: false,
     currentTime: 0,
@@ -118,6 +131,10 @@ export default function App() {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const loadedTrackIdRef = useRef<string | null>(null);
+  const shuffleRef = useRef(false);
+  const shuffleQueueRef = useRef<number[]>([]);
+  const shufflePosRef = useRef<number>(0);
+  const lastTrackCountRef = useRef(0);
 
   // Initialize Audio element once
   if (typeof window !== 'undefined' && !audioRef.current) {
@@ -166,6 +183,19 @@ export default function App() {
     }
   }, [currentTrackIndex, tracks]);
 
+  // Rebuild shuffle queue when track count changes
+  useEffect(() => {
+    if (tracks.length !== lastTrackCountRef.current) {
+      lastTrackCountRef.current = tracks.length;
+      if (shuffleRef.current && tracks.length > 1) {
+        const queue = buildShuffleQueue(tracks.length);
+        const pos = queue.indexOf(currentTrackIndex);
+        shuffleQueueRef.current = queue;
+        shufflePosRef.current = pos !== -1 ? pos : 0;
+      }
+    }
+  }, [tracks, currentTrackIndex]);
+
   // Sync event listeners with audio element
   useEffect(() => {
     const audio = audioRef.current;
@@ -195,20 +225,37 @@ export default function App() {
         } catch (e) {}
         audio.play().catch(e => console.log("Loop replay failed:", e));
       } else {
-        // Autoplay next track in queue
         if (tracks.length > 1) {
-          setCurrentTrackIndex(prevIndex => {
-            const nextIdx = (prevIndex + 1) % tracks.length;
+          if (shuffleRef.current) {
+            const queue = shuffleQueueRef.current;
+            shufflePosRef.current++;
+            if (shufflePosRef.current >= queue.length) {
+              const newQueue = buildShuffleQueue(tracks.length);
+              shuffleQueueRef.current = newQueue;
+              shufflePosRef.current = 0;
+            }
+            const nextIdx = shuffleQueueRef.current[shufflePosRef.current];
+            setCurrentTrackIndex(nextIdx);
             setTimeout(() => {
-              if (audioRef.current) {
-                audioRef.current.play().catch(e => {
-                  console.log("Autoplay next failed:", e);
-                  setIsPlaying(false);
-                });
-              }
+              audioRef.current?.play().catch(e => {
+                console.log("Autoplay next failed:", e);
+                setIsPlaying(false);
+              });
             }, 50);
-            return nextIdx;
-          });
+          } else {
+            setCurrentTrackIndex(prevIndex => {
+              const nextIdx = (prevIndex + 1) % tracks.length;
+              setTimeout(() => {
+                if (audioRef.current) {
+                  audioRef.current.play().catch(e => {
+                    console.log("Autoplay next failed:", e);
+                    setIsPlaying(false);
+                  });
+                }
+              }, 50);
+              return nextIdx;
+            });
+          }
         } else {
           setIsPlaying(false);
           try {
@@ -311,13 +358,17 @@ export default function App() {
     setTracks([]);
     setCurrentTrackIndex(0);
     setIsPlaying(false);
+    if (shuffle) {
+      setShuffle(false);
+      shuffleRef.current = false;
+    }
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.src = '';
     }
   };
 
-  const handleSelectTrack = (index: number) => {
+  const playTrackAtIndex = (index: number) => {
     setCurrentTrackIndex(index);
     setTimeout(() => {
       const audio = audioRef.current;
@@ -331,6 +382,21 @@ export default function App() {
         });
       }
     }, 50);
+  };
+
+  const handleSelectTrack = (index: number) => {
+    if (shuffleRef.current && tracks.length > 1) {
+      const remaining = tracks
+        .map((_, i) => i)
+        .filter(i => i !== index);
+      for (let i = remaining.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [remaining[i], remaining[j]] = [remaining[j], remaining[i]];
+      }
+      shuffleQueueRef.current = [index, ...remaining];
+      shufflePosRef.current = 0;
+    }
+    playTrackAtIndex(index);
   };
 
   const handleUpdateTrackMetadata = (id: string, updatedFields: Partial<Track>) => {
@@ -395,14 +461,31 @@ export default function App() {
 
   const handleNext = () => {
     if (tracks.length === 0) return;
-    const nextIdx = (currentTrackIndex + 1) % tracks.length;
-    handleSelectTrack(nextIdx);
+    if (shuffleRef.current && tracks.length > 1) {
+      const queue = shuffleQueueRef.current;
+      shufflePosRef.current++;
+      if (shufflePosRef.current >= queue.length) {
+        const newQueue = buildShuffleQueue(tracks.length);
+        shuffleQueueRef.current = newQueue;
+        shufflePosRef.current = 0;
+      }
+      playTrackAtIndex(shuffleQueueRef.current[shufflePosRef.current]);
+    } else {
+      const nextIdx = (currentTrackIndex + 1) % tracks.length;
+      playTrackAtIndex(nextIdx);
+    }
   };
 
   const handlePrev = () => {
     if (tracks.length === 0) return;
-    const prevIdx = (currentTrackIndex - 1 + tracks.length) % tracks.length;
-    handleSelectTrack(prevIdx);
+    if (shuffleRef.current && tracks.length > 1) {
+      const queue = shuffleQueueRef.current;
+      shufflePosRef.current = Math.max(0, shufflePosRef.current - 1);
+      playTrackAtIndex(queue[shufflePosRef.current]);
+    } else {
+      const prevIdx = (currentTrackIndex - 1 + tracks.length) % tracks.length;
+      playTrackAtIndex(prevIdx);
+    }
   };
 
   const handleSeek = (time: number) => {
@@ -441,6 +524,23 @@ export default function App() {
     const nextLoop = !playbackState.loop;
     audio.loop = nextLoop;
     setPlaybackState(prev => ({ ...prev, loop: nextLoop }));
+  };
+
+  const handleToggleShuffle = () => {
+    if (shuffle) {
+      setShuffle(false);
+      shuffleRef.current = false;
+      triggerFlashMessage('Aleatorio OFF');
+    } else {
+      if (tracks.length <= 1) return;
+      const queue = buildShuffleQueue(tracks.length);
+      const pos = queue.indexOf(currentTrackIndex);
+      shuffleQueueRef.current = queue;
+      shufflePosRef.current = pos !== -1 ? pos : 0;
+      setShuffle(true);
+      shuffleRef.current = true;
+      triggerFlashMessage('Aleatorio ON — Sin repetición');
+    }
   };
 
   const handleReorderTracks = (startIndex: number, endIndex: number) => {
@@ -540,6 +640,8 @@ export default function App() {
           visualizerType={visualizerType}
           onChangeVisualizer={setVisualizerType}
           onReorderTracks={handleReorderTracks}
+          shuffle={shuffle}
+          onToggleShuffle={handleToggleShuffle}
           onPullUp={handlePullUp}
           flashMessage={flashMessage}
           onTriggerFlashMessage={triggerFlashMessage}
@@ -559,6 +661,8 @@ export default function App() {
           onTriggerFlashMessage={triggerFlashMessage}
           tickerText={tickerText}
           onSeek={handleSeek}
+          uiBrightness={uiBrightness}
+          onChangeBrightness={setUiBrightness}
         />
       )}
     </div>

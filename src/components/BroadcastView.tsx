@@ -18,6 +18,8 @@ interface BroadcastViewProps {
   onTriggerFlashMessage: (msg: string) => void;
   tickerText?: string;
   onSeek?: (time: number) => void;
+  uiBrightness: number;
+  onChangeBrightness: (val: number) => void;
 }
 
 export const BroadcastView: React.FC<BroadcastViewProps> = ({
@@ -32,6 +34,8 @@ export const BroadcastView: React.FC<BroadcastViewProps> = ({
   onTriggerFlashMessage,
   tickerText = '',
   onSeek,
+  uiBrightness,
+  onChangeBrightness,
 }) => {
   const currentTrack = tracks[currentTrackIndex] || null;
   const [hasEntered, setHasEntered] = useState(false);
@@ -112,6 +116,7 @@ export const BroadcastView: React.FC<BroadcastViewProps> = ({
       className="w-full h-screen bg-[#07080a] text-[#f5f4f0] font-sans flex flex-col justify-between overflow-hidden relative"
       style={{
         backgroundImage: config.bgGradient,
+        filter: `brightness(${uiBrightness})`,
       }}
     >
       {/* Background Audio Visualizer - Low Opacity */}
@@ -188,6 +193,20 @@ export const BroadcastView: React.FC<BroadcastViewProps> = ({
       </AnimatePresence>
       {/* Floating Escape Controls - ultra-discreet at the top corner to maximize screen real estate */}
       <div className="absolute top-3 right-3 z-50 transition-opacity duration-300 opacity-30 hover:opacity-100 flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 bg-black/40 rounded-full px-2 py-1 border border-white/5 backdrop-blur-xs">
+          <span className="text-[8px] font-mono text-[#8a939e] uppercase tracking-wider">Brillo</span>
+          <input
+            type="range"
+            min={0.8}
+            max={2.0}
+            step={0.05}
+            value={uiBrightness}
+            onChange={(e) => onChangeBrightness(parseFloat(e.target.value))}
+            className="w-14 h-1 accent-amber-500 bg-[#1f2126] rounded-lg appearance-none cursor-pointer"
+            title="Brillo de la interfaz"
+          />
+          <span className="text-[8px] font-mono text-[#8a939e] w-5 text-right">{uiBrightness.toFixed(1)}x</span>
+        </div>
         <button 
           onClick={onReturnToCabin}
           className="flex items-center gap-1 px-2 py-1 bg-black/40 hover:bg-black/75 text-[#8a939e] hover:text-[#f5f4f0] border border-white/5 hover:border-white/10 text-[9px] uppercase tracking-widest rounded-full font-mono transition-all cursor-pointer backdrop-blur-xs active:scale-95 shadow-sm"
